@@ -3,12 +3,13 @@ import static org.junit.Assert.assertEquals;
 public class Bender {
 
     MapFormer mP;
+    Robot rb = new Robot();
 
     // Constructor: ens passen el mapa en forma d'String
 
     public Bender(String mapa) {
 
-        mP = new MapFormer(mapa);
+        mP = new MapFormer(mapa,rb);
         System.out.println(this.mP.toString());
 
     }
@@ -21,21 +22,38 @@ public class Bender {
 
     public String run() {
 
-        char[] direcciones = {'S','E','N','W'};
-        char[] direccionesInvertidas = {'N','W','S','E'};
-
-        char posicion = this.mP.formedMap[this.mP.benderY][this.mP.benderX];
+        char posicion = this.mP.formedMap[this.rb.robotY][this.rb.robotX].character;
         String result = "";
+        int contadorDireccion = 0;
+        char direccionActual = 'S';
 
         while(posicion != '$'){
-            posicion = this.mP.formedMap[this.mP.benderY][this.mP.benderX];
 
+            if (!canMove(mP.formedMap[rb.robotY][rb.robotX], direccionActual, mP))
 
-            this.mP.setBenderX(this.mP.benderX);
-            this.mP.setBenderY(this.mP.benderY+1);
+            if (direccionActual == 'S'){
+                this.rb.setRobotX(rb.robotX);
+                this.rb.setRobotY(rb.robotY+1);
+            }
+
         }
-
         return result;
+    }
+
+    public boolean canMove(Celda c, char direccion, MapFormer map){
+
+        char actual = ' ';
+
+        if (direccion == 'S') actual = map.formedMap[c.posY+1][c.posX].character;
+
+        if (direccion == 'E') actual = map.formedMap[c.posY][c.posX+1].character;
+
+        if (direccion == 'N') actual = map.formedMap[c.posY-1][c.posX].character;
+
+        if (direccion == 'N') actual = map.formedMap[c.posY][c.posX-1].character;
+
+
+        return actual != '#';
     }
 
 
@@ -54,45 +72,63 @@ public class Bender {
     }
 }
 
+class Robot{
+
+    int robotX;
+    int robotY;
+    char[] direcciones = {'S','E','N','W'};
+    char[] direccionesInvertidas = {'N','W','S','E'};
+
+    Robot(){
+    }
+
+    public void setRobotX(int x){
+        this.robotX = x;
+    }
+    public void setRobotY(int y){
+        this.robotY = y;
+    }
+    public int getRobotX(){
+        return this.robotX;
+    }
+    public int getRobotY(){
+        return this.robotY;
+    }
+}
+
+class Celda{
+
+    char character;
+    int posY;
+    int posX;
+
+    Celda(char c, int y, int x){
+        this.character = c;
+        this.posX = x;
+        this.posY = y;
+    }
+}
+
 class MapFormer{
 
     //attr.
-    char[][] formedMap;
-    int benderX = 0;
-    int benderY = 0;
+    Celda[][] formedMap;
 
-
-    MapFormer(String mapa){
+    MapFormer(String mapa, Robot rb){
         mapa = mapa + "\n";
         //Divide el String y lo mete en un Array dividiendo por los \n
         String[] arr = mapa.split("\n");
-        formedMap = new char[arr.length][countColumns(mapa)];
+        formedMap = new Celda [arr.length][countColumns(mapa)];
 
         for (int i = 0; i < arr.length; i++) {
             for (int j = 0; j < arr[i].length(); j++) {
-                formedMap[i][j] = arr[i].charAt(j);
+                formedMap[i][j] = new Celda(arr[i].charAt(j),i ,j);
                 if (arr[i].charAt(j) == 'X'){
-                    benderX = j;
-                    benderY = i;
+                   rb.setRobotX(j);
+                   rb.setRobotY(i);
                 }
             }
         }
-    }
-
-    public void setBenderX(int benderX){
-        this.benderX = benderX;
-    }
-
-    public void setBenderY(int benderY){
-        this.benderY = benderY;
-    }
-
-    public int getBenderX(){
-        return this.benderX;
-    }
-
-    public int getBenderY(){
-        return this.benderY;
     }
 
     public int countColumns(String str){
@@ -115,10 +151,10 @@ class MapFormer{
     public String toString(){
         StringBuilder strMap = new StringBuilder();
         // Recorre el mapa.
-        for (char[] chars : this.formedMap) {
+        for (Celda[] chars : this.formedMap) {
             for (int j = 0; j < this.formedMap[0].length; j++) {
                 // Coje los valores de cada posicion del mapa y los pone en un String.
-                strMap.append(chars[j]);
+                strMap.append(chars[j].character);
             }
             strMap.append('\n');
         }

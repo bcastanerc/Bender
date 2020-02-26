@@ -1,17 +1,20 @@
-import static org.junit.Assert.assertEquals;
+import java.util.LinkedList;
 
 public class Bender {
 
     MapFormer mP;
     Robot rb = new Robot();
+    LinkedList<Teleport> tpList = new LinkedList<Teleport>();
 
     // Constructor: ens passen el mapa en forma d'String
 
+    /**
+     *
+     * @param mapa
+     */
     public Bender(String mapa) {
-
-        mP = new MapFormer(mapa,rb);
+        mP = new MapFormer(mapa,rb, tpList);
         System.out.println(this.mP.toString());
-
     }
 
         // Navegar fins a l'objectiu («$»).
@@ -20,36 +23,51 @@ public class Bender {
         // els valors «S», «N», «W» o «E»,
         // segons la posició del robot a cada moment.
 
+    /**
+     *
+     * @return
+     */
     public String run() {
 
         char posicion = this.mP.formedMap[this.rb.robotY][this.rb.robotX].character;
         String result = "";
         int contadorDireccion = 0;
-        char direccionActual;
-
 
         while(posicion != '$'){
 
             // Define la dirección según si el robot ha pisado un inverso o no.
-            if (rb.inverted){
-                direccionActual = rb.direccionesInvertidas[contadorDireccion];
-            }else{
-                direccionActual = rb.direcciones[contadorDireccion];
-            }
+            char direccionActual = defineDirection(contadorDireccion);
+            posicion = move(direccionActual);
+            result += direccionActual;
 
-            if (canMove(mP.formedMap[rb.robotY][rb.robotX], direccionActual, mP)){
-                posicion = move(direccionActual);
-                result += direccionActual;
-            }else{
-                contadorDireccion++;
-            }
+            if (posicion == 'I') rb.inverted = true;
+
         }
+        System.out.println(result);
         return result;
     }
 
-    public String defineDirection(){
+    /**
+     * Esta función define la dirección en la que irá el robot, para definir la dirección comprovará si las prioridades
+     * están invertidas y depende de si lo estan o no asignaran la dirección correspondiente al valor numerico de directionCounter.
+     * @param directionCounter Asignaran la dirección correspondiente al valor numerico de directionCounter
+     * @return Devuelve un caracter el cual representa la dirección en la que se moverá
+     */
+    public char defineDirection(int directionCounter){
+        char direccionActual = ' ';
 
-        return
+        if (this.rb.inverted){
+            direccionActual = this.rb.direccionesInvertidas[directionCounter];
+        }else{
+            direccionActual = this.rb.direcciones[directionCounter];
+        }
+
+        if (!canMove(this.mP.formedMap[this.rb.robotY][this.rb.robotX], direccionActual)){
+            System.out.println(directionCounter+1);
+            defineDirection(directionCounter+1);
+        }
+
+        return direccionActual;
     }
 
     /**
@@ -58,20 +76,26 @@ public class Bender {
      * donde se encuentra actualmente el robot y la dirección en la que intenta ir.
      * @param c Representa la celda en la cual se encuentra el robot actualmente.
      * @param direction Este caracter determina en la dirección que provará moverse.
-     * @param map Es el mapa en el cual se mueve el robot
      * @return devuelve un boolean, true si el robot se puede mover o false si es una pared ya que no se podrá mover.
      */
-    public boolean canMove(Celda c, char direction, MapFormer map){
+    public boolean canMove(Celda c, char direction){
 
         char actual = ' ';
 
-        if (direction == 'S') actual = map.formedMap[c.posY+1][c.posX].character;
-
-        if (direction == 'E') actual = map.formedMap[c.posY][c.posX+1].character;
-
-        if (direction == 'N') actual = map.formedMap[c.posY-1][c.posX].character;
-
-        if (direction == 'W') actual = map.formedMap[c.posY][c.posX-1].character;
+        switch (direction){
+            case 'S':
+                actual = this.mP.formedMap[c.posY+1][c.posX].character;
+                break;
+            case 'E':
+                actual = this.mP.formedMap[c.posY][c.posX+1].character;
+                break;
+            case 'N':
+                actual = this.mP.formedMap[c.posY-1][c.posX].character;
+                break;
+            case 'W':
+                actual = this.mP.formedMap[c.posY][c.posX-1].character;
+                break;
+        }
 
         return actual != '#';
     }
@@ -86,28 +110,27 @@ public class Bender {
     public char move(char direccionActual) {
         switch (direccionActual){
             case 'S':
-                this.rb.setRobotY(rb.robotY+1);
-                this.rb.setRobotX(rb.robotX);
+                this.rb.setRobotY(this.rb.robotY+1);
+                this.rb.setRobotX(this.rb.robotX);
                 break;
 
             case 'E':
-                this.rb.setRobotY(rb.robotY);
-                this.rb.setRobotX(rb.robotX+1);
+                this.rb.setRobotY(this.rb.robotY);
+                this.rb.setRobotX(this.rb.robotX+1);
                 break;
 
             case 'N':
-                this.rb.setRobotY(rb.robotY-1);
-                this.rb.setRobotX(rb.robotX);
+                this.rb.setRobotY(this.rb.robotY-1);
+                this.rb.setRobotX(this.rb.robotX);
                 break;
 
             case 'W':
-                this.rb.setRobotY(rb.robotY);
-                this.rb.setRobotX(rb.robotX-1);
+                this.rb.setRobotY(this.rb.robotY);
+                this.rb.setRobotX(this.rb.robotX-1);
                 break;
         }
-        return this.mP.formedMap[rb.robotY][rb.robotX].character;
+        return this.mP.formedMap[this.rb.robotY][this.rb.robotX].character;
     }
-
 
     public static void main(String[] args) {
             String mapa = "" +
@@ -150,9 +173,6 @@ class Robot{
     public int getRobotY(){
         return this.robotY;
     }
-    public void setInverted(boolean inverted) {
-        this.inverted = inverted;
-    }
     public boolean isInverted() {
         return inverted;
     }
@@ -171,28 +191,59 @@ class Celda{
     }
 }
 
+class Teleport {
+
+    int posY;
+    int posX;
+
+    Teleport(int y, int x){
+        this.posX = x;
+        this.posY = y;
+    }
+}
+
 class MapFormer{
 
-    //attr.
     Celda[][] formedMap;
 
-    MapFormer(String mapa, Robot rb){
-        mapa = mapa + "\n";
+    /**
+     * Este es el constructor de MapFormer, dentro del constructor asignaremos a cada posición de un array bidimensional
+     * un objeto Celda, además si encontramos el robot 'X' le asignaremos su posición y tambien crearemos un objeto Teleport
+     * cada vez que encontremos una 'T' en el mapa, este objeto Teleport tiene las cordenadas que representan en el mapa.
+     * @param map És el mapa que nos pasan en forma de String.
+     * @param rb Devuelve el mapa formado.
+     */
+    MapFormer(String map, Robot rb, LinkedList<Teleport> tpList){
+        map = map + "\n";
         //Divide el String y lo mete en un Array dividiendo por los \n
-        String[] arr = mapa.split("\n");
-        formedMap = new Celda [arr.length][countColumns(mapa)];
+        String[] arr = map.split("\n");
+        formedMap = new Celda [arr.length][countColumns(map)];
 
+        // Recorre el String copiando caracter a caracter.
         for (int i = 0; i < arr.length; i++) {
             for (int j = 0; j < arr[i].length(); j++) {
                 formedMap[i][j] = new Celda(arr[i].charAt(j),i ,j);
+
+                // Crea el objeto Robot y le da su posición de inicio.
                 if (arr[i].charAt(j) == 'X'){
                    rb.setRobotX(j);
                    rb.setRobotY(i);
+                }
+
+                // Añade los teletransportadores a una lista.
+                if (arr[i].charAt(j) == 'T'){
+                    tpList.add(new Teleport(i,j));
+                    System.out.println(" Teletransportador: Y=" + i +" Y=" + j );
                 }
             }
         }
     }
 
+    /**
+     * Cuenta cual es la fila con el mayor numero de caracteres en el string para poder hacer el array de ese tamño.
+     * @param str És el mapa que nos pasan en forma de String.
+     * @return Devuelve el numero máximo de caracteres de entre todas las filas.
+     */
     public int countColumns(String str){
         int columns = 0;
 
@@ -209,6 +260,10 @@ class MapFormer{
         return columns;
     }
 
+    /**
+     * Esta función hace Override a el método toString, se ha implementado para poder hacer print del mapa
+     * @return
+     */
     @Override
     public String toString(){
         StringBuilder strMap = new StringBuilder();

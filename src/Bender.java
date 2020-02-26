@@ -25,35 +25,87 @@ public class Bender {
         char posicion = this.mP.formedMap[this.rb.robotY][this.rb.robotX].character;
         String result = "";
         int contadorDireccion = 0;
-        char direccionActual = 'S';
+        char direccionActual;
+
 
         while(posicion != '$'){
 
-            if (!canMove(mP.formedMap[rb.robotY][rb.robotX], direccionActual, mP))
-
-            if (direccionActual == 'S'){
-                this.rb.setRobotX(rb.robotX);
-                this.rb.setRobotY(rb.robotY+1);
+            // Define la dirección según si el robot ha pisado un inverso o no.
+            if (rb.inverted){
+                direccionActual = rb.direccionesInvertidas[contadorDireccion];
+            }else{
+                direccionActual = rb.direcciones[contadorDireccion];
             }
 
+            if (canMove(mP.formedMap[rb.robotY][rb.robotX], direccionActual, mP)){
+                posicion = move(direccionActual);
+                result += direccionActual;
+            }else{
+                contadorDireccion++;
+            }
         }
         return result;
     }
 
-    public boolean canMove(Celda c, char direccion, MapFormer map){
+    public String defineDirection(){
+
+        return
+    }
+
+    /**
+     * Esta función se encarga de que el robot simule moverse en la dirección que lo haria, cuando simula la dirección
+     * lo que buscamos es que no se ponga encima de una pared, para esto necesitamos el mapa en el cual nos moveremos,
+     * donde se encuentra actualmente el robot y la dirección en la que intenta ir.
+     * @param c Representa la celda en la cual se encuentra el robot actualmente.
+     * @param direction Este caracter determina en la dirección que provará moverse.
+     * @param map Es el mapa en el cual se mueve el robot
+     * @return devuelve un boolean, true si el robot se puede mover o false si es una pared ya que no se podrá mover.
+     */
+    public boolean canMove(Celda c, char direction, MapFormer map){
 
         char actual = ' ';
 
-        if (direccion == 'S') actual = map.formedMap[c.posY+1][c.posX].character;
+        if (direction == 'S') actual = map.formedMap[c.posY+1][c.posX].character;
 
-        if (direccion == 'E') actual = map.formedMap[c.posY][c.posX+1].character;
+        if (direction == 'E') actual = map.formedMap[c.posY][c.posX+1].character;
 
-        if (direccion == 'N') actual = map.formedMap[c.posY-1][c.posX].character;
+        if (direction == 'N') actual = map.formedMap[c.posY-1][c.posX].character;
 
-        if (direccion == 'N') actual = map.formedMap[c.posY][c.posX-1].character;
-
+        if (direction == 'W') actual = map.formedMap[c.posY][c.posX-1].character;
 
         return actual != '#';
+    }
+
+    /**
+     * Esta función hará la simulación de que el robot se mueve en la dirección que le decimos, al moverse nos situaremos
+     * encima de una celda, la cual tendra un caracter propio, tenemos que comprobar si esa celda es la meta, un teletransportador
+     * o un inversor.
+     * @param direccionActual Este caracter determina en la dirección que se moverá.
+     * @return Devuelve en el caracter que se encuentra actualmente.
+     */
+    public char move(char direccionActual) {
+        switch (direccionActual){
+            case 'S':
+                this.rb.setRobotY(rb.robotY+1);
+                this.rb.setRobotX(rb.robotX);
+                break;
+
+            case 'E':
+                this.rb.setRobotY(rb.robotY);
+                this.rb.setRobotX(rb.robotX+1);
+                break;
+
+            case 'N':
+                this.rb.setRobotY(rb.robotY-1);
+                this.rb.setRobotX(rb.robotX);
+                break;
+
+            case 'W':
+                this.rb.setRobotY(rb.robotY);
+                this.rb.setRobotX(rb.robotX-1);
+                break;
+        }
+        return this.mP.formedMap[rb.robotY][rb.robotX].character;
     }
 
 
@@ -72,12 +124,16 @@ public class Bender {
     }
 }
 
+/**
+ * El objeto Robot guarda su posición, dirección y su estado para poder llegar a la meta lo iremos trasformando.
+ */
 class Robot{
 
     int robotX;
     int robotY;
     char[] direcciones = {'S','E','N','W'};
     char[] direccionesInvertidas = {'N','W','S','E'};
+    boolean inverted;
 
     Robot(){
     }
@@ -93,6 +149,12 @@ class Robot{
     }
     public int getRobotY(){
         return this.robotY;
+    }
+    public void setInverted(boolean inverted) {
+        this.inverted = inverted;
+    }
+    public boolean isInverted() {
+        return inverted;
     }
 }
 

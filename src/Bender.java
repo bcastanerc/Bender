@@ -1,10 +1,12 @@
+import java.util.Iterator;
 import java.util.LinkedList;
 
 public class Bender {
 
     MapFormer mP;
     Robot rb = new Robot();
-    LinkedList<Teleport> tpList = new LinkedList<Teleport>();
+    LinkedList<Teleport> teleportMapList = new LinkedList<Teleport>();
+    LinkedList<Celda> celdaMapList = new LinkedList<Celda>();
 
     // Constructor: ens passen el mapa en forma d'String
 
@@ -13,8 +15,41 @@ public class Bender {
      * @param mapa
      */
     public Bender(String mapa) {
-        mP = new MapFormer(mapa,rb, tpList);
-        System.out.println(this.mP.toString());
+
+        mP = new MapFormer(mapa,rb, teleportMapList, celdaMapList);
+        Iterator<Teleport> teleportMapListIt = teleportMapList.iterator();
+        while(teleportMapListIt.hasNext()){
+
+            Teleport tActual = teleportMapListIt.next();
+            Teleport nearest = defineNearestTp(tActual, teleportMapList);
+
+            tActual.nearTpX = nearest.posX;
+            tActual.nearTpY = nearest.posY;
+
+        }
+    }
+
+    public Teleport defineNearestTp(Teleport t, LinkedList teleportMapList){
+
+        Iterator<Teleport> teleportMapListIt = teleportMapList.iterator();
+        double result = 999999999;
+        Teleport auxTlp = new Teleport(0,0);
+
+        while (teleportMapListIt.hasNext()){
+           Teleport tn = teleportMapListIt.next();
+           // Math.pow(Math.tan((t.posX-tn.posX)*(t.posY-tn.posY)),2);
+
+            int x = Math.abs(tn.posX-t.posX);
+            int y = Math.abs(tn.posY-t.posY);
+            double aux = Math.sqrt((x+x)+(y+y));
+
+            if ((result > aux) && aux != 0){
+                result = aux;
+                auxTlp = tn;
+            }
+
+        }
+        return auxTlp;
     }
 
         // Navegar fins a l'objectiu («$»).
@@ -32,20 +67,36 @@ public class Bender {
         char posicion = this.mP.formedMap[this.rb.robotY][this.rb.robotX].character;
         String result = "";
         int contadorDireccion = 0;
+        char direccionActual = 'S';
 
         while(posicion != '$'){
 
             // Define la dirección según si el robot ha pisado un inverso o no.
-            char direccionActual = defineDirection(contadorDireccion);
+            if (!canMove(this.mP.formedMap[this.rb.robotY][this.rb.robotX], direccionActual)) {
+                direccionActual = defineDirection(contadorDireccion);
+            }
             posicion = move(direccionActual);
+            System.out.print(direccionActual);
             result += direccionActual;
 
-            if (posicion == 'I') rb.inverted = true;
+            if (posicion == 'I') {
+                rb.inverted = !rb.inverted;
+            }
+            if (posicion == 'T'){
+                Teleport tpOut = teleportMapList.get(celdaMapList.indexOf(this.mP.formedMap[this.rb.robotY][this.rb.robotX]));
+                this.rb.setRobotX(tpOut.nearTpX);
+                this.rb.setRobotY(tpOut.nearTpY);
+            }
+            // TODO
+            if (result.length() > 1000) return null;
+
 
         }
         System.out.println(result);
         return result;
     }
+
+
 
     /**
      * Esta función define la dirección en la que irá el robot, para definir la dirección comprovará si las prioridades
@@ -64,7 +115,7 @@ public class Bender {
 
         if (!canMove(this.mP.formedMap[this.rb.robotY][this.rb.robotX], direccionActual)){
             System.out.println(directionCounter+1);
-            defineDirection(directionCounter+1);
+            direccionActual = defineDirection(directionCounter+1);
         }
 
         return direccionActual;
@@ -133,17 +184,18 @@ public class Bender {
     }
 
     public static void main(String[] args) {
-            String mapa = "" +
-                    "#######\n" +
-                    "# X   #\n" +
-                    "#     #\n" +
-                    "#     #\n" +
-                    "#     #\n" +
-                    "# $   #\n" +
-                    "#     #\n" +
-                    "#######";
-            Bender bender = new Bender(mapa);
-           bender.run()     ;
+        String mapa = "" +
+                "   #######\n" +
+                "   # XTI #\n" +
+                "   #    $#\n" +
+                "####    #####\n" +
+                "#          T#\n" +
+                "####     ####\n" +
+                "   #    I#\n" +
+                "   #     #\n" +
+                "   #######";
+        Bender bender = new Bender(mapa);
+         bender.run();
     }
 }
 
@@ -183,11 +235,21 @@ class Celda{
     char character;
     int posY;
     int posX;
+    int pasadas;
 
     Celda(char c, int y, int x){
         this.character = c;
         this.posX = x;
         this.posY = y;
+        this.pasadas = 0;
+    }
+
+    public void setPasadas(int pasadas) {
+        this.pasadas = pasadas;
+    }
+
+    public int getPasadas() {
+        return pasadas;
     }
 }
 
@@ -195,6 +257,8 @@ class Teleport {
 
     int posY;
     int posX;
+    int nearTpY;
+    int nearTpX;
 
     Teleport(int y, int x){
         this.posX = x;
@@ -213,7 +277,7 @@ class MapFormer{
      * @param map És el mapa que nos pasan en forma de String.
      * @param rb Devuelve el mapa formado.
      */
-    MapFormer(String map, Robot rb, LinkedList<Teleport> tpList){
+    MapFormer(String map, Robot rb, LinkedList<Teleport> teleportMap, LinkedList<Celda> celdaMap){
         map = map + "\n";
         //Divide el String y lo mete en un Array dividiendo por los \n
         String[] arr = map.split("\n");
@@ -232,8 +296,8 @@ class MapFormer{
 
                 // Añade los teletransportadores a una lista.
                 if (arr[i].charAt(j) == 'T'){
-                    tpList.add(new Teleport(i,j));
-                    System.out.println(" Teletransportador: Y=" + i +" Y=" + j );
+                    teleportMap.add(new Teleport(i,j));
+                    celdaMap.add(formedMap[i][j]);
                 }
             }
         }
@@ -261,17 +325,17 @@ class MapFormer{
     }
 
     /**
-     * Esta función hace Override a el método toString, se ha implementado para poder hacer print del mapa
-     * @return
+     * Esta función hace Override a el método toString, se ha implementado para poder hacer print del mapa.
+     * @return Devuelve un String con el mapa para poder imprimirlo en pantalla.
      */
     @Override
     public String toString(){
         StringBuilder strMap = new StringBuilder();
         // Recorre el mapa.
-        for (Celda[] chars : this.formedMap) {
+        for (int i = 0; i< this.formedMap.length; i++) {
             for (int j = 0; j < this.formedMap[0].length; j++) {
                 // Coje los valores de cada posicion del mapa y los pone en un String.
-                strMap.append(chars[j].character);
+                strMap.append(this.formedMap[i][j].character);
             }
             strMap.append('\n');
         }

@@ -538,4 +538,14 @@ public class BenderTest {
         assertNull(bender.run());
     }
 
+    @Test
+    public void test31() {
+        String mapa = "" +
+                "#####\n" +
+                "# X #\n" +
+                "#####";
+        Bender bender = new Bender(mapa);
+        assertNull(bender.run());
+    }
+
 }

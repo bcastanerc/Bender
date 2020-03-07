@@ -23,14 +23,27 @@ public class BenderTest2 {
         bender = new Bender(mapa);
         assertEquals(4, bender.bestRun());
 
+
+        mapa = "" +
+                "#######\n" +
+                "# X   #\n" +
+                "# T   #\n" +
+                "#     #\n" +
+                "#     #\n" +
+                "#T   T#\n" +
+                "#$  T #\n" +
+                "#######";
+        bender = new Bender(mapa);
+        assertEquals(2, bender.bestRun());
+
         mapa = "" +
                 "#######\n" +
                 "# X   #\n" +
                 "##### #\n" +
                 "#     #\n" +
                 "#$    #\n" +
-                "#     #\n" +
-                "#     #\n" +
+                "###   #\n" +
+                "# #   #\n" +
                 "#######";
         bender = new Bender(mapa);
         assertEquals(10, bender.bestRun());
@@ -53,7 +66,7 @@ public class BenderTest2 {
 
 
         mapa = "" +
-                "##############\n" +
+                "############\n" +
                 "# X          #\n" +
                 "#      #     #\n" +
                 "## ##  #     #\n" +
@@ -70,14 +83,14 @@ public class BenderTest2 {
                 "#   #        #\n" +
                 "#   #        #\n" +
                 "#            #\n" +
-                "#   #        #\n" +
+                "#   #        ##\n" +
                 "##############";
         bender = new Bender(mapa);
         assertEquals(39, bender.bestRun());
 
 
         mapa = "" +
-                "##############\n" +
+                "###############\n" +
                 "# X           #\n" +
                 "#      ###    #\n" +
                 "#    ### ###  #\n" +
@@ -89,11 +102,11 @@ public class BenderTest2 {
                 "#             #\n" +
                 "###############";
         bender = new Bender(mapa);
-        // assertEquals(18, bender.bestRun());
+         assertEquals(18, bender.bestRun());
 
 
         mapa = "" +
-                "##############\n" +
+                "###############\n" +
                 "# X           #\n" +
                 "#             #\n" +
                 "#  #########  #\n" +
@@ -103,7 +116,7 @@ public class BenderTest2 {
                 "#          ####\n" +
                 "#             #\n" +
                 "#             #\n" +
-                "## ###  ###   ##\n" +
+                "## ###  ###   #\n" +
                 "#    #  #     #\n" +
                 "#    ## #     #\n" +
                 "#     # #     #\n" +
@@ -122,7 +135,7 @@ public class BenderTest2 {
                 "#          #  #\n" +
                 "###############";
         bender = new Bender(mapa);
-        //assertEquals(51, bender.bestRun());
+        assertEquals(51, bender.bestRun());
 
         // Amb Teleport
         mapa = "" +
@@ -146,7 +159,7 @@ public class BenderTest2 {
 
 
         mapa = "" +
-                "##############\n" +
+                "###############\n" +
                 "# X           #\n" +
                 "#             #\n" +
                 "#  #########  #\n" +
@@ -156,7 +169,7 @@ public class BenderTest2 {
                 "#          ####\n" +
                 "#             #\n" +
                 "#             #\n" +
-                "## ###  ###   ##\n" +
+                "## ###  ###   #\n" +
                 "#    #  #     #\n" +
                 "#    ## #     #\n" +
                 "#     # #     #\n" +
@@ -175,6 +188,7 @@ public class BenderTest2 {
                 "#          #  #\n" +
                 "###############";
         bender = new Bender(mapa);
-        //assertEquals(45, bender.bestRun());
+         assertEquals(45, bender.bestRun());
+
     }
 }

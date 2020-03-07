@@ -19,7 +19,6 @@ public class Bender {
 
         // Crea el mapa, asigna posiciones a goal y rb, rellena la lista de celdas y teletransportadores.
         mP = new MapFormer(map,rb, teleportMapList, cellMapList, goal);
-
         // Asigna el teletransportador más cercano por cada teletransportador en la lista.
         for (Teleport actualTeleport : teleportMapList) {
             Teleport nearest = defineNearestTp(actualTeleport, teleportMapList);

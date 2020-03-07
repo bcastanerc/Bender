@@ -3,12 +3,10 @@ import java.util.LinkedList;
 public class Bender {
 
     // Bender run() Attributes.
-    private MapFormer mP;
+    private Map map;
     private Robot rb = new Robot();
     private LinkedList<Teleport> teleportMapList = new LinkedList<>();
     private LinkedList<Cell> cellMapList = new LinkedList<>();
-
-    //Bender bestRun() Attributes.
     private Goal goal = new Goal();
 
     /**
@@ -18,7 +16,7 @@ public class Bender {
     public Bender(String map) {
 
         // Crea el mapa, asigna posiciones a goal y rb, rellena la lista de celdas y teletransportadores.
-        mP = new MapFormer(map,rb, teleportMapList, cellMapList, goal);
+        this.map = new Map(map,rb, teleportMapList, cellMapList, goal);
         // Asigna el teletransportador más cercano por cada teletransportador en la lista.
         for (Teleport actualTeleport : teleportMapList) {
             Teleport nearest = defineNearestTp(actualTeleport, teleportMapList);
@@ -35,7 +33,7 @@ public class Bender {
      * @param teleportMapList lista de los teleports a los cuales se puede teletransportar
      * @return devuelve el teletransportador que esta más cerca para guardar sus coordenadas.
      */
-    public Teleport defineNearestTp(Teleport tOrigen, LinkedList<Teleport> teleportMapList){
+    private Teleport defineNearestTp(Teleport tOrigen, LinkedList<Teleport> teleportMapList){
 
         // Creamos un teletransportador con la distanci al maximo posible para que se cambie y las coordenadas a 0,0.
         double distancia = 99999999;
@@ -77,7 +75,7 @@ public class Bender {
      * @param x coordenadas en el plano horizontal del teletransportador con el que se calculan los angulos.
      * @return devuelve los angulos resultantes del calculo.
      */
-    public double setAngles(Teleport tOrigen, double y, double x){
+    private double setAngles(Teleport tOrigen, double y, double x){
 
         double xActual = x -tOrigen.getPosX();
         double yActual = tOrigen.getPosY() - y;
@@ -109,17 +107,16 @@ public class Bender {
     public String run() {
 
         // Si el mapa no es valido devuelve null;
-        if (!this.mP.isValidMap()) return null;
+        if (!this.map.isValidMap()) return null;
 
-        char currentPosition = this.mP.getFormedMap()[this.rb.getRobotY()][this.rb.getRobotX()].getCharacter();
+        char currentPosition = this.map.getFormedMap()[this.rb.getRobotY()][this.rb.getRobotX()].getCharacter();
         StringBuilder result = new StringBuilder();
         int directionCounter = 0;
         char actualDirection = 'S';
 
-        while(currentPosition != '$'){
-
+        while(currentPosition != this.map.getFormedMap()[this.goal.getPosY()][this.goal.getPosX()].getCharacter()){
             // Define la dirección según si el robot ha pisado un inverso o no.
-            if (canMove(this.mP.getFormedMap()[this.rb.getRobotY()][this.rb.getRobotX()], actualDirection)) {
+            if (canMove(this.map.getFormedMap()[this.rb.getRobotY()][this.rb.getRobotX()], actualDirection)) {
                 actualDirection = defineDirection(directionCounter);
                 if (actualDirection == '\u0000') return null;
             }
@@ -128,20 +125,20 @@ public class Bender {
 
             // Suma obtiene la cantidad de veces que se
 
-            int goneByActualCell =this.mP.getFormedMap()[this.rb.getRobotY()][this.rb.getRobotX()].getGoneBy();
+            int goneByActualCell =this.map.getFormedMap()[this.rb.getRobotY()][this.rb.getRobotX()].getGoneBy();
 
-            this.mP.getFormedMap()[this.rb.getRobotY()][this.rb.getRobotX()].setGoneBy(goneByActualCell+1);
+            this.map.getFormedMap()[this.rb.getRobotY()][this.rb.getRobotX()].setGoneBy(goneByActualCell+1);
             result.append(actualDirection);
 
             // Si el robot pasa más de 8 veces por la misma celda es un bucle infinito.
-            if (this.mP.getFormedMap()[this.rb.getRobotY()][this.rb.getRobotX()].getGoneBy() > 8 ) return null;
+            if (this.map.getFormedMap()[this.rb.getRobotY()][this.rb.getRobotX()].getGoneBy() > 8 ) return null;
 
             // Si el robot pisa in Inversor se invierte el estado del robot (atributo inverted).
             if (currentPosition == 'I') this.rb.setInverted(!this.rb.isInverted());
 
             // Si el robot esta e un Teletransportador accederá al atributo que define cual es el más cercano de ese.
             if (currentPosition == 'T'){
-                Teleport tpOut = teleportMapList.get(cellMapList.indexOf(this.mP.getFormedMap()[this.rb.getRobotY()][this.rb.getRobotX()]));
+                Teleport tpOut = teleportMapList.get(cellMapList.indexOf(this.map.getFormedMap()[this.rb.getRobotY()][this.rb.getRobotX()]));
                 this.rb.setRobotX(tpOut.getNearTpX());
                 this.rb.setRobotY(tpOut.getNearTpY());
             }
@@ -169,7 +166,7 @@ public class Bender {
         }
 
         // Si no puede moverse prueba con las siguiente dirreción en la lista.
-        if (canMove(this.mP.getFormedMap()[this.rb.getRobotY()][this.rb.getRobotX()], actualDirection)){
+        if (canMove(this.map.getFormedMap()[this.rb.getRobotY()][this.rb.getRobotX()], actualDirection)){
             actualDirection = defineDirection(directionCounter+1);
         }
 
@@ -191,16 +188,16 @@ public class Bender {
         // Simula moverse en la dirección indicada.
         switch (direction){
             case 'S':
-                actual = this.mP.getFormedMap()[c.getPosY()+1][c.getPosX()].getCharacter();
+                actual = this.map.getFormedMap()[c.getPosY()+1][c.getPosX()].getCharacter();
                 break;
             case 'E':
-                actual = this.mP.getFormedMap()[c.getPosY()][c.getPosX()+1].getCharacter();
+                actual = this.map.getFormedMap()[c.getPosY()][c.getPosX()+1].getCharacter();
                 break;
             case 'N':
-                actual = this.mP.getFormedMap()[c.getPosY()-1][c.getPosX()].getCharacter();
+                actual = this.map.getFormedMap()[c.getPosY()-1][c.getPosX()].getCharacter();
                 break;
             case 'W':
-                actual = this.mP.getFormedMap()[c.getPosY()][c.getPosX()-1].getCharacter();
+                actual = this.map.getFormedMap()[c.getPosY()][c.getPosX()-1].getCharacter();
                 break;
         }
         // Si el caracter de la celda actual es diferente a # entonces se puede mover.
@@ -239,7 +236,7 @@ public class Bender {
                 break;
         }
         // devuelve el caracter para saber si estamos encima de un Teletransportador, inversor o la meta
-        return this.mP.getFormedMap()[this.rb.getRobotY()][this.rb.getRobotX()].getCharacter();
+        return this.map.getFormedMap()[this.rb.getRobotY()][this.rb.getRobotX()].getCharacter();
     }
 
     /**
@@ -251,11 +248,11 @@ public class Bender {
         int stepsNumber = 1;
         // Asigna a las celdas al rededor del robot la distancia de 1.
         setDistances(stepsNumber, this.rb.getRobotY(), this.rb.getRobotX());
-        while(this.mP.getFormedMap()[this.goal.getPosY()][this.goal.getPosX()].getDistanceFromGoal() == 0){
+        while(this.map.getFormedMap()[this.goal.getPosY()][this.goal.getPosX()].getDistanceFromGoal() == 0){
             // Recorre el mapa buscanco las celdas
-            for (int i = 0; i < this.mP.getFormedMap().length; i++) {
-                for (int j = 0; j < this.mP.getFormedMap()[i].length; j++) {
-                    if (this.mP.getFormedMap()[i][j].getDistanceFromGoal() == stepsNumber){
+            for (int i = 0; i < this.map.getFormedMap().length; i++) {
+                for (int j = 0; j < this.map.getFormedMap()[i].length; j++) {
+                    if (this.map.getFormedMap()[i][j].getDistanceFromGoal() == stepsNumber){
                         // Comprueba la celda de abajo
                         setDistances(stepsNumber+1,i+1,j);
                         // Comprueba la celda de la derecha
@@ -269,7 +266,7 @@ public class Bender {
             }
             stepsNumber++;
         }
-        return this.mP.getFormedMap()[this.goal.getPosY()][this.goal.getPosX()].getDistanceFromGoal()-1;
+        return this.map.getFormedMap()[this.goal.getPosY()][this.goal.getPosX()].getDistanceFromGoal()-1;
     }
 
     /**
@@ -279,15 +276,16 @@ public class Bender {
      * @param y coordenada Y de la celda con el valor numerico actual.
      * @param x coordenada X de la celda con el valor numerico actual.
      */
-    public void setDistances(int steps, int y, int x){
-        // Si la celda que hay abajo de la actual no es una pared y no tiene asignado un número ya
-        if ((this.mP.getFormedMap()[y][x].getCharacter() != '#') && (this.mP.getFormedMap()[y][x].getDistanceFromGoal() == 0)){
+    private void setDistances(int steps, int y, int x){
+        // Si la celda que hay en las coordenadas de entrada respecto a la actual no es una pared y no tiene asignado un número ya
+        // le asignaremos los pasos a la celda.
+        if ((this.map.getFormedMap()[y][x].getCharacter() != '#') && (this.map.getFormedMap()[y][x].getDistanceFromGoal() == 0)){
             // Si el caracter de la celta es un teletransportador asigna el numero en el teletransportador de salida también
-            if (this.mP.getFormedMap()[y][x].getCharacter() == 'T'){
-                Teleport tpOut = teleportMapList.get(cellMapList.indexOf(this.mP.getFormedMap()[y][x]));
-                this.mP.getFormedMap()[tpOut.getNearTpY()][tpOut.getNearTpX()].setDistanceFromGoal(steps);
+            if (this.map.getFormedMap()[y][x].getCharacter() == 'T'){
+                Teleport tpOut = teleportMapList.get(cellMapList.indexOf(this.map.getFormedMap()[y][x]));
+                this.map.getFormedMap()[tpOut.getNearTpY()][tpOut.getNearTpX()].setDistanceFromGoal(steps);
             }
-            this.mP.getFormedMap()[y][x].setDistanceFromGoal(steps);
+            this.map.getFormedMap()[y][x].setDistanceFromGoal(steps);
         }
     }
 }
@@ -296,7 +294,7 @@ public class Bender {
  * El objeto MapFormer está compuesto por un Array multidimensional de Celdas y un boolean el cual define si el mapa es valido,
  * para ser valido tiene que cumplir ciertos requisitos.
  */
-class MapFormer{
+class Map {
 
     // Cell atributes.
     private Cell[][] formedMap;
@@ -309,7 +307,7 @@ class MapFormer{
      * @param map És el mapa que nos pasan en forma de String.
      * @param rb Devuelve el mapa formado.
      */
-    MapFormer(String map, Robot rb, LinkedList<Teleport> teleportMap, LinkedList<Cell> cellMap, Goal goal){
+    Map(String map, Robot rb, LinkedList<Teleport> teleportMap, LinkedList<Cell> cellMap, Goal goal){
 
         //Divide el String y lo mete en un Array dividiendo por los \n
         String[] arr = map.split("\n");
@@ -317,12 +315,13 @@ class MapFormer{
         // Cuenta cual es el máximo de caracteres que hay en una fila.
         int maxColumnes = countColumns(map);
 
-        // Añade caracteres a las filas que tienen menos que el minimo.
+        // Añade paredes a las filas que tienen menos que la fila más larga.
         for (int i = 0; i < arr.length; i++) {
             if (arr[i].length() < maxColumnes){
                 arr[i] =  rightPaddingMap(arr[i],maxColumnes-arr[i].length());
             }
         }
+
         formedMap = new Cell[arr.length][countColumns(map)];
 
         // Comprueba que el mapa sea valido.
@@ -365,7 +364,7 @@ class MapFormer{
      * @param totalCharacters total de caracteres que se tienen que agregar a el String.
      * @return devuelve el string con los caracteres añadidos.
      */
-    public String rightPaddingMap(String line, int totalCharacters){
+    private String rightPaddingMap(String line, int totalCharacters){
         line = line + "#".repeat(Math.max(0, totalCharacters));
         return line;
     }
@@ -375,7 +374,7 @@ class MapFormer{
      * @param map El String que entra por parametro determina de que estará compuesto el mapa.
      * @return  Devuelve un boolean
      */
-    public boolean mapIsValid(String map){
+    private boolean mapIsValid(String map){
 
         int robotCounter = 0;
         int goalCounter = 0;
@@ -401,7 +400,7 @@ class MapFormer{
      * @param strMap És el mapa que nos pasan en forma de String.
      * @return Devuelve el numero máximo de caracteres de entre todas las filas.
      */
-    public int countColumns(String strMap){
+    private int countColumns(String strMap){
         int columns = 0;
 
         for (int i = 0, aux = 0; i < strMap.length(); i++) {

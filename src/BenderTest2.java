@@ -1,10 +1,7 @@
 import org.junit.Test;
-
 import static org.junit.Assert.*;
 
-
 public class BenderTest2 {
-
 
     @Test
     public void optimalWalkTest() {
@@ -22,7 +19,6 @@ public class BenderTest2 {
                 "#######";
         bender = new Bender(mapa);
         assertEquals(4, bender.bestRun());
-
 
         mapa = "" +
                 "#######\n" +
@@ -48,7 +44,6 @@ public class BenderTest2 {
         bender = new Bender(mapa);
         assertEquals(10, bender.bestRun());
 
-
         mapa = "" +
                 "#######\n" +
                 "# X   #\n" +
@@ -64,7 +59,6 @@ public class BenderTest2 {
         bender = new Bender(mapa);
         assertEquals(16, bender.bestRun());
 
-
         mapa = "" +
                 "############\n" +
                 "# X          #\n" +
@@ -73,7 +67,7 @@ public class BenderTest2 {
                 "#      #     #\n" +
                 "#      #     #\n" +
                 "#            #\n" +
-                "#      #### ##\n" +
+                "#      #### ###\n" +
                 "##### ##    ##\n" +
                 "#   # #      #\n" +
                 "# $ ###      #\n" +
@@ -186,9 +180,8 @@ public class BenderTest2 {
                 "#  #   ###### #\n" +
                 "#  #       #  #\n" +
                 "#          #  #\n" +
-                "###############";
+                "#############";
         bender = new Bender(mapa);
          assertEquals(45, bender.bestRun());
-
     }
 }

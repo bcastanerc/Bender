@@ -1,7 +1,6 @@
 import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
-
 import static org.junit.Assert.*;
 
 
@@ -537,6 +536,43 @@ public class BenderTest {
                 "###\n" +
                 "#X#\n" +
                 "###";
+        Bender bender = new Bender(mapa);
+        assertNull(bender.run());
+    }
+
+    @Test
+    public void test32() {
+        String mapa = "";
+        Bender bender = new Bender(mapa);
+        assertNull(bender.run());
+    }
+
+    @Test
+    public void test33() {
+        String mapa = "" +
+                "##\n" +
+                "X\n" +
+                " \n" +
+                " \n" +
+                " \n" +
+                "$\n" +
+                " \n" +
+                "#";
+        Bender bender = new Bender(mapa);
+        assertEquals("SSSS", bender.run());
+    }
+
+    @Test
+    public void tes34() {
+        String mapa = "" +
+                "#######\n" +
+                "#X#   #\n" +
+                "###   #\n" +
+                "#     #\n" +
+                "#     #\n" +
+                "# $   #\n" +
+                "#     #\n" +
+                "#######";
         Bender bender = new Bender(mapa);
         assertNull(bender.run());
     }

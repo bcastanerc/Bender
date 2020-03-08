@@ -1,3 +1,4 @@
+import org.jetbrains.annotations.NotNull;
 import java.util.LinkedList;
 
 public class Bender {
@@ -19,85 +20,8 @@ public class Bender {
         this.map = new Map(map,rb, teleportMapList, cellMapList, goal);
         // Asigna el teletransportador más cercano por cada teletransportador en la lista.
         for (Teleport actualTeleport : teleportMapList) {
-            Teleport nearest = defineNearestTp(actualTeleport, teleportMapList);
-            actualTeleport.setNearTpX(nearest.getPosX());
-            actualTeleport.setNearTpY(nearest.getPosY());
-
+             actualTeleport.defineNearestTp(teleportMapList);
         }
-    }
-
-    /**
-     * Calcula cual es el teletransportador más cercano del teletrasportador que entra por parametro y compara las
-     * distancias con cada teletransportador de la lista.
-     * @param tOrigen Teletransportador al cual se le esta calculando cual es el más cercano
-     * @param teleportMapList lista de los teleports a los cuales se puede teletransportar
-     * @return devuelve el teletransportador que esta más cerca para guardar sus coordenadas.
-     */
-    private Teleport defineNearestTp(Teleport tOrigen, LinkedList<Teleport> teleportMapList){
-
-        // Creamos un teletransportador con la distanci al maximo posible para que se cambie y las coordenadas a 0,0.
-        double distancia = 99999999;
-        Teleport tFinal = new Teleport(0,0);
-
-        // Por cada teletransportador en la lista haremos los calculos
-        for (Teleport tActual : teleportMapList){
-            // La lista se omite a si mismo.
-            if (tOrigen != tActual){
-
-                // Calculamos la hipotenunsa del triangulo que forma el vector para saber la distancia.
-                double x = tActual.getPosX()-tOrigen.getPosX();
-                double y = tActual.getPosY()-tOrigen.getPosY();
-                double auxDistance = Math.sqrt((Math.pow(y,2))+(Math.pow(x,2)));
-
-                // Si la distancia entre los dos teletransportadores es la misma usaremos una función para calcular los angulos.
-                if (distancia == auxDistance){
-                    if (setAngles(tOrigen,tFinal.getPosY(),tFinal.getPosX()) > setAngles(tOrigen,tActual.getPosY(),tActual.getPosX())){
-                        tFinal = tActual;
-                        distancia = auxDistance;
-                    }
-                }
-
-                // Si la distancia del actual es menor al Final secambia el Final por actual.
-                if (auxDistance < distancia){
-                    distancia = auxDistance;
-                    tFinal= tActual;
-                }
-
-            }
-        }
-        return tFinal;
-    }
-
-    /**
-     * Esta función calcula cual es el angulo del teletransportador actual con referencia al teletransportador central,
-     * @param tOrigen Teletransportador central.
-     * @param y coordenadas en el plano vertical del teletransportador con el que se calculan los angulos.
-     * @param x coordenadas en el plano horizontal del teletransportador con el que se calculan los angulos.
-     * @return devuelve los angulos resultantes del calculo.
-     */
-    private double setAngles(Teleport tOrigen, double y, double x){
-
-        double xActual = x -tOrigen.getPosX();
-        double yActual = tOrigen.getPosY() - y;
-        double anguloActual;
-
-        // Si la multiplicación da positivo y/x.
-        if ((xActual*yActual)  < 0){
-            anguloActual = Math.abs(Math.toDegrees(Math.atan(yActual/xActual)));
-        }else{
-            // Si da negativo x/y.
-            anguloActual = Math.abs(Math.toDegrees(Math.atan(xActual/yActual)));
-        }
-
-        // Depende de en que fragmento se encuentre dentro del plano cartesiano le sumamos el valor por los fragmentos que haya pasado.
-        // 2º plano.
-        if(xActual >= 0 && yActual < 0)anguloActual+=90;
-        // 3º plano.
-        if (xActual < 0 && yActual < 0) anguloActual+= 180;
-        // 4º plano.
-        if (xActual < 0 && yActual >= 0) anguloActual+=270;
-
-        return anguloActual;
     }
 
     /**
@@ -106,28 +30,28 @@ public class Bender {
      */
     public String run() {
 
-        // Si el mapa no es valido devuelve null;
+        // Si el mapa es considerado como no valido devuelve null;
         if (!this.map.isValidMap()) return null;
 
         char currentPosition = this.map.getFormedMap()[this.rb.getRobotY()][this.rb.getRobotX()].getCharacter();
         StringBuilder result = new StringBuilder();
-        int directionCounter = 0;
         char actualDirection = 'S';
 
         while(currentPosition != this.map.getFormedMap()[this.goal.getPosY()][this.goal.getPosX()].getCharacter()){
-            // Define la dirección según si el robot ha pisado un inverso o no.
-            if (canMove(this.map.getFormedMap()[this.rb.getRobotY()][this.rb.getRobotX()], actualDirection)) {
-                actualDirection = defineDirection(directionCounter);
+            // Define la dirección según si el robot ha pisado un inversor o no.
+            if (cantMove(this.map.getFormedMap()[this.rb.getRobotY()][this.rb.getRobotX()], actualDirection)) {
+                actualDirection = defineDirection(0);
                 if (actualDirection == '\u0000') return null;
             }
 
+            // Asigna la nueva posición al Robot.
             currentPosition = move(actualDirection);
 
-            // Suma obtiene la cantidad de veces que se
-
-            int goneByActualCell =this.map.getFormedMap()[this.rb.getRobotY()][this.rb.getRobotX()].getGoneBy();
-
+            // Suma obtiene la cantidad de veces que se ha pasado por la celda actual.
+            int goneByActualCell = this.map.getFormedMap()[this.rb.getRobotY()][this.rb.getRobotX()].getGoneBy();
             this.map.getFormedMap()[this.rb.getRobotY()][this.rb.getRobotX()].setGoneBy(goneByActualCell+1);
+
+            // Concatena la dirección en la que se ha movido el Robot.
             result.append(actualDirection);
 
             // Si el robot pasa más de 8 veces por la misma celda es un bucle infinito.
@@ -154,9 +78,8 @@ public class Bender {
      */
     private char defineDirection(int directionCounter){
         char actualDirection;
-
-        // No es necesario controlar que no pase de 4 ya que no es posible, pero no esta de más.
-        if (directionCounter > 4) return '\u0000';
+        //Controlamos que no pase de 3, si pasa quiere decir que esta encerrado entre paredes.
+        if (directionCounter > 3) return '\u0000';
 
         // Define las direcciones segun el estado del robot.
         if (this.rb.isInverted()){
@@ -166,7 +89,7 @@ public class Bender {
         }
 
         // Si no puede moverse prueba con las siguiente dirreción en la lista.
-        if (canMove(this.map.getFormedMap()[this.rb.getRobotY()][this.rb.getRobotX()], actualDirection)){
+        if (cantMove(this.map.getFormedMap()[this.rb.getRobotY()][this.rb.getRobotX()], actualDirection)){
             actualDirection = defineDirection(directionCounter+1);
         }
 
@@ -181,7 +104,7 @@ public class Bender {
      * @param direction Este caracter determina en la dirección que provará moverse.
      * @return devuelve un boolean, true si el robot se puede mover o false si es una pared ya que no se podrá mover.
      */
-    private boolean canMove(Cell c, char direction){
+    private boolean cantMove(Cell c, char direction){
 
         char actual = ' ';
 
@@ -235,7 +158,6 @@ public class Bender {
                 this.rb.setRobotX(this.rb.getRobotX()-1);
                 break;
         }
-        // devuelve el caracter para saber si estamos encima de un Teletransportador, inversor o la meta
         return this.map.getFormedMap()[this.rb.getRobotY()][this.rb.getRobotX()].getCharacter();
     }
 
@@ -245,14 +167,14 @@ public class Bender {
      */
     public int bestRun(){
 
-        int stepsNumber = 1;
+        int stepsNumber = 0;
         // Asigna a las celdas al rededor del robot la distancia de 1.
-        setDistances(stepsNumber, this.rb.getRobotY(), this.rb.getRobotX());
-        while(this.map.getFormedMap()[this.goal.getPosY()][this.goal.getPosX()].getDistanceFromGoal() == 0){
+        this.map.getFormedMap()[this.rb.getRobotY()][this.rb.getRobotX()].setDistanceFromRobot(0);
+        while(this.map.getFormedMap()[this.goal.getPosY()][this.goal.getPosX()].getDistanceFromRobot() == -1){
             // Recorre el mapa buscanco las celdas
             for (int i = 0; i < this.map.getFormedMap().length; i++) {
                 for (int j = 0; j < this.map.getFormedMap()[i].length; j++) {
-                    if (this.map.getFormedMap()[i][j].getDistanceFromGoal() == stepsNumber){
+                    if (this.map.getFormedMap()[i][j].getDistanceFromRobot() == stepsNumber){
                         // Comprueba la celda de abajo
                         setDistances(stepsNumber+1,i+1,j);
                         // Comprueba la celda de la derecha
@@ -266,7 +188,7 @@ public class Bender {
             }
             stepsNumber++;
         }
-        return this.map.getFormedMap()[this.goal.getPosY()][this.goal.getPosX()].getDistanceFromGoal()-1;
+        return this.map.getFormedMap()[this.goal.getPosY()][this.goal.getPosX()].getDistanceFromRobot();
     }
 
     /**
@@ -279,13 +201,13 @@ public class Bender {
     private void setDistances(int steps, int y, int x){
         // Si la celda que hay en las coordenadas de entrada respecto a la actual no es una pared y no tiene asignado un número ya
         // le asignaremos los pasos a la celda.
-        if ((this.map.getFormedMap()[y][x].getCharacter() != '#') && (this.map.getFormedMap()[y][x].getDistanceFromGoal() == 0)){
+        if ((this.map.getFormedMap()[y][x].getCharacter() != '#') && (this.map.getFormedMap()[y][x].getDistanceFromRobot() == -1)){
             // Si el caracter de la celta es un teletransportador asigna el numero en el teletransportador de salida también
             if (this.map.getFormedMap()[y][x].getCharacter() == 'T'){
                 Teleport tpOut = teleportMapList.get(cellMapList.indexOf(this.map.getFormedMap()[y][x]));
-                this.map.getFormedMap()[tpOut.getNearTpY()][tpOut.getNearTpX()].setDistanceFromGoal(steps);
+                this.map.getFormedMap()[tpOut.getNearTpY()][tpOut.getNearTpX()].setDistanceFromRobot(steps);
             }
-            this.map.getFormedMap()[y][x].setDistanceFromGoal(steps);
+            this.map.getFormedMap()[y][x].setDistanceFromRobot(steps);
         }
     }
 }
@@ -307,7 +229,7 @@ class Map {
      * @param map És el mapa que nos pasan en forma de String.
      * @param rb Devuelve el mapa formado.
      */
-    Map(String map, Robot rb, LinkedList<Teleport> teleportMap, LinkedList<Cell> cellMap, Goal goal){
+    Map(@NotNull String map, Robot rb, LinkedList<Teleport> teleportMap, LinkedList<Cell> cellMap, Goal goal){
 
         //Divide el String y lo mete en un Array dividiendo por los \n
         String[] arr = map.split("\n");
@@ -325,37 +247,33 @@ class Map {
         formedMap = new Cell[arr.length][countColumns(map)];
 
         // Comprueba que el mapa sea valido.
-        if(!mapIsValid(map)){
-            rb.setRobotY(1);
-            rb.setRobotX(1);
-            validMap = false;
-        }
+        if(mapIsValid(map)){
+            // Recorre el String copiando caracter a caracter.
+            for (int i = 0; i < arr.length; i++) {
+                for (int j = 0; j < arr[i].length(); j++) {
+                    char tmpType = arr[i].charAt(j);
+                    formedMap[i][j] = new Cell(arr[i].charAt(j),i ,j);
 
-        // Recorre el String copiando caracter a caracter.
-        for (int i = 0; i < arr.length; i++) {
-            for (int j = 0; j < arr[i].length(); j++) {
-                char tmpType = arr[i].charAt(j);
-                formedMap[i][j] = new Cell(arr[i].charAt(j),i ,j);
+                    // Crea el objeto Robot y le da su posición de inicio.
+                    if (tmpType == 'X'){
+                        rb.setRobotY(i);
+                        rb.setRobotX(j);
+                    }
 
-                // Crea el objeto Robot y le da su posición de inicio.
-                if (tmpType == 'X'){
-                    rb.setRobotY(i);
-                    rb.setRobotX(j);
-                }
+                    // Añade los teletransportadores a una lista.
+                    if (tmpType == 'T'){
+                        teleportMap.add(new Teleport(i,j));
+                        cellMap.add(formedMap[i][j]);
+                    }
 
-                // Añade los teletransportadores a una lista.
-                if (tmpType == 'T'){
-                    teleportMap.add(new Teleport(i,j));
-                    cellMap.add(formedMap[i][j]);
-                }
-
-                // Añade la posición de la meta a el objeto meta.
-                if (tmpType == '$'){
-                    goal.setPosY(i);
-                    goal.setPosX(j);
+                    // Añade la posición de la meta a el objeto meta.
+                    if (tmpType == '$'){
+                        goal.setPosY(i);
+                        goal.setPosX(j);
+                    }
                 }
             }
-        }
+        }else validMap = false;
     }
 
     /**
@@ -364,6 +282,7 @@ class Map {
      * @param totalCharacters total de caracteres que se tienen que agregar a el String.
      * @return devuelve el string con los caracteres añadidos.
      */
+    @NotNull
     private String rightPaddingMap(String line, int totalCharacters){
         line = line + "#".repeat(Math.max(0, totalCharacters));
         return line;
@@ -374,7 +293,7 @@ class Map {
      * @param map El String que entra por parametro determina de que estará compuesto el mapa.
      * @return  Devuelve un boolean
      */
-    private boolean mapIsValid(String map){
+    private boolean mapIsValid(@NotNull String map){
 
         int robotCounter = 0;
         int goalCounter = 0;
@@ -383,15 +302,10 @@ class Map {
         for (int i = 0; i < map.length(); i++) {
 
             if (map.charAt(i) == 'X') robotCounter++;
-
             if (map.charAt(i) == '$') goalCounter++;
-
             if (map.charAt(i) == 'T') teleportCounter++;
-
-            // Si hay mas de 1 robot o 1 meta el mapa ya no es valido, no hace falta seguir comprobando el mapa.
             if (robotCounter > 1|| goalCounter > 1) return false;
         }
-        // Solo puede haber 1 robot, 1 meta y tiene que haber 0 o mas de 1 teleport.
         return robotCounter == 1 && goalCounter == 1 && teleportCounter != 1;
     }
 
@@ -400,9 +314,8 @@ class Map {
      * @param strMap És el mapa que nos pasan en forma de String.
      * @return Devuelve el numero máximo de caracteres de entre todas las filas.
      */
-    private int countColumns(String strMap){
+    private int countColumns(@NotNull String strMap){
         int columns = 0;
-
         for (int i = 0, aux = 0; i < strMap.length(); i++) {
             if (strMap.charAt(i) != '\n') aux++;
             else{
@@ -500,7 +413,7 @@ class Cell {
     private int goneBy = 0;
 
     //Cell bestRun() attibutes.
-    private int distanceFromGoal = 0;
+    private int distanceFromRobot = -1;
 
     Cell(char c, int y, int x){
         this.character = c;
@@ -526,11 +439,11 @@ class Cell {
         return goneBy;
     }
 
-    public int getDistanceFromGoal() {
-        return distanceFromGoal;
+    public int getDistanceFromRobot() {
+        return distanceFromRobot;
     }
-    public void setDistanceFromGoal(int distanceFromGoal) {
-        this.distanceFromGoal = distanceFromGoal;
+    public void setDistanceFromRobot(int distanceFromRobot) {
+        this.distanceFromRobot = distanceFromRobot;
     }
 }
 
@@ -571,6 +484,71 @@ class Teleport {
         return posX;
     }
 
+    /**
+     * Calcula cual es el teletransportador más cercano del teletransportador origen y compara las
+     * distancias con cada teletransportador de la lista.
+     * @param teleportMapList lista de los teleports a los cuales se puede teletransportar
+     */
+    public void defineNearestTp(@NotNull LinkedList<Teleport> teleportMapList){
+
+        // Creamos un teletransportador con la distanci al maximo posible para que se cambie y las coordenadas a 0,0.
+        double distancia = 99999999;
+        Teleport tFinal = new Teleport(0,0);
+
+        // Por cada teletransportador en la lista haremos los calculos
+        for (Teleport tActual : teleportMapList){
+            // La lista se omite a si mismo.
+            if (this != tActual){
+
+                // Calculamos la hipotenunsa del triangulo que forma el vector para saber la distancia.
+                double x = tActual.getPosX()-this.getPosX();
+                double y = tActual.getPosY()-this.getPosY();
+                double auxDistance = Math.sqrt((Math.pow(y,2))+(Math.pow(x,2)));
+
+                // Si la distancia entre los dos teletransportadores es la misma usaremos una función para calcular los angulos.
+                if (distancia == auxDistance){
+                    if (setAngles(this,tFinal.getPosY(),tFinal.getPosX())
+                            > setAngles(this,tActual.getPosY(),tActual.getPosX())){
+                        tFinal = tActual;
+                        distancia = auxDistance;
+                    }
+                }
+
+                // Si la distancia del actual es menor al Final secambia el Final por actual.
+                if (auxDistance < distancia){
+                    distancia = auxDistance;
+                    tFinal= tActual;
+                }
+            }
+        }
+        this.setNearTpY(tFinal.getPosY());
+        this.setNearTpX(tFinal.getPosX());
+    }
+
+    /**
+     * Esta función calcula cual es el angulo del teletransportador actual con referencia al teletransportador central,
+     * @param tOrigen Teletransportador central.
+     * @param y coordenadas en el plano vertical del teletransportador con el que se calculan los angulos.
+     * @param x coordenadas en el plano horizontal del teletransportador con el que se calculan los angulos.
+     * @return devuelve los angulos resultantes del calculo.
+     */
+    private double setAngles(@NotNull Teleport tOrigen, double y, double x){
+
+        double xActual = x -tOrigen.getPosX();
+        double yActual = tOrigen.getPosY() - y;
+        double anguloActual;
+
+        if ((xActual*yActual)  < 0){
+            anguloActual = Math.abs(Math.toDegrees(Math.atan(yActual/xActual)));
+        }else{
+            anguloActual = Math.abs(Math.toDegrees(Math.atan(xActual/yActual)));
+        }
+
+        if(xActual >= 0 && yActual < 0)anguloActual+=90;
+        if (xActual < 0 && yActual < 0) anguloActual+= 180;
+        if (xActual < 0 && yActual >= 0) anguloActual+=270;
+        return anguloActual;
+    }
 }
 
 /**
@@ -592,7 +570,6 @@ class Goal {
     public int getPosX() {
         return posX;
     }
-
     public void setPosY(int posY) {
         this.posY = posY;
     }
